@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  language      String    @default("en")
+  theme         String    @default("system")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  trips         Trip[]
+  notes         Note[]
+}
+
+model Trip {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  coverImage  String?
+  isPublic    Boolean    @default(false)
+  shareToken  String?    @unique
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  stops       TripStop[]
+  budgets     Budget[]
+  notes       Note[]
+}
+
+model TripStop {
+  id        String     @id @default(cuid())
+  tripId    String
+  trip      Trip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  city      String
+  country   String
+  latitude  Float?
+  longitude Float?
+  startDate DateTime?
+  endDate   DateTime?
+  order     Int
+  activities Activity[]
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  stopId      String
+  stop        TripStop @relation(fields: [stopId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  category    String   // e.g., Accommodation, Flight, Sightseeing, Food
+  startTime   DateTime?
+  endTime     DateTime?
+  cost        Float?
+  currency    String   @default("USD")
+  location    String?
+}
+
+model Budget {
+  id       String  @id @default(cuid())
+  tripId   String
+  trip     Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  category String
+  amount   Float
+  currency String  @default("USD")
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tripId    String?
+  trip      Trip?    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  title     String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
